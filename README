@@ -1,0 +1,15 @@
+This is a Microsoft SQL Report Server rs.exe script that can be used to back up all reports that are in a specified  Report Server folder.
+
+Example usage:
+
+rs -i ReportBackup.rss -s http://localhost:8080/ReportServer
+
+To configure this script, you need to edit ReportBackup.rss and change the following lines under the "Configuration:" section:
+
+Public ssrsPath As String = "/"
+Public exportTo As String = "C:\Export"
+
+ssrsPath - Set this to the parent folder in SSRS that you wish to back up. For example, setting this to "/" will back up all reports in all sub folders.
+exportTo - Set this to the directory on disk where you want to back up the report .RDL files, without any trailing slash.
+		The structure on disk will match the structure in ssrsPath.
+           

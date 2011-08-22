@@ -1,0 +1,112 @@
+'
+' File: ReportBackup.rss
+' 
+' Description:
+' This is a Microsoft SQL Report Server rs.exe script that can be used to back up all reports that are in a specified 
+' Report Server folder. This will use Report Server's API to back up the report's format to .RDL files on disk.
+'
+' Example usage:
+' rs -i ReportBackup.rss -s http://localhost:8080/ReportServer
+
+' Configuration:
+' ssrsPath - Set this to the parent folder in SSRS that you wish to back up. For example: /
+' exportTo - Set this to the directory on disk where you want to back up the report .RDL files, without any trailing slash.
+'            The structure on disk will match the structure in ssrsPath.
+'           
+Public ssrsPath As String = "/"
+Public exportTo As String = "C:\Export"
+Public Debug As Boolean = True
+
+Public Sub Main()
+    Dim items() As CatalogItem
+    Dim exportCount As Integer = 0
+    Try
+        Console.WriteLine(String.Format("Exporting reports from '{0}' into '{1}'....", ssrsPath, exportTo))
+        Console.WriteLine("")
+        
+        items = rs.ListChildren(ssrsPath, True)
+        Dim item As CataLogItem
+        For Each item In items
+            If item.Type <> 2 Then Continue For
+                
+            Dim definition As [Byte]() = Nothing
+            Dim item_path As String = Nothing
+            Dim item_export_path As String = Nothing
+            
+            Try
+                Console.Write(item.Path + "... ")
+                
+                item_path = item.Path
+                definition = rs.GetReportDefinition(item_path)
+                item_export_path = item_path.Replace("/", "\")
+                item_export_path = String.Format("{0}{1}.rdl", exportTo, item_export_path)
+                
+                BackupReport(item_path, definition, item_export_path)
+                
+                Console.WriteLine("Exported.")
+                WriteLogEntry(String.Format("Report '{0}' exported to '{1}'.", item_path, item_export_path))
+                
+                exportCount += 1
+            Catch er As Exception
+                Console.WriteLine("Export failed!")
+                Console.WriteLine(String.Format(">> Error: {0}", er.Message))
+                WriteLogEntry(String.Format("Failed to export report '{0}'.", item_path), er)
+            End Try
+        Next item
+    Catch e As Exception
+        Console.WriteLine(e.Message)
+        WriteLogEntry("Reports export failed.", e)
+    End Try
+End Sub
+
+Sub BackupReport(ByVal ReportPath As String, ByVal Definition As [Byte](), ByVal BackupPath As String)
+    Try
+        SaveBinary(BackupPath, Definition)
+    Catch e As Exception
+        Console.WriteLine(String.Format("Failed to write report '{0}' to disk.", ReportPath))
+        Console.WriteLine(String.Format(">> Error: {0}", e.Message))
+        WriteLogEntry(String.Format("Failed to write report '{0}' to disk.", ReportPath), e) 
+    End Try
+End Sub
+
+Sub SaveBinary(ByVal FileName As String, ByVal Data As [Byte]())
+    Dim oDoc As New XmlDocument()
+    
+    If File.Exists(FileName) Then 
+        File.Delete(FileName)
+    End If
+    
+    If Not Directory.Exists(Path.GetDirectoryName(FileName)) Then 
+        Directory.CreateDirectory(Path.GetDirectoryName(FileName))
+    End If
+    
+    Using oStream As MemoryStream = New MemoryStream(Data)
+        oDoc.Load(oStream)
+        oDoc.Save(FileName)
+    End Using
+End Sub
+
+Sub WriteLogEntry(ByVal Message As String)
+    Dim logfile As String = "ReportBackup.log"
+
+    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+        oWriter.WriteLine(String.Format("{0} - {1}", DateTime.Now, Message))
+    End Using
+End Sub
+
+Sub WriteLogEntry(ByVal Message As String, ByVal Ex As Exception)
+    Dim logfile As String = "Error.log"
+
+    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+        oWriter.WriteLine(String.Format("{0} - {1} [Err: {2}]", DateTime.Now, Message, Ex.Message))
+    End Using
+End Sub
+
+Sub WriteDebugEntry(ByVal Message As String)
+    Dim logfile As String = "Debug.log"
+
+    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+        oWriter.WriteLine(String.Format("{0} - {1}", DateTime.Now, Message))
+    End Using
+End Sub
+
