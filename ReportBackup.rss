@@ -61,6 +61,14 @@ End Sub
 
 Sub BackupReport(ByVal ReportPath As String, ByVal Definition As [Byte](), ByVal BackupPath As String)
     Try
+	If File.Exists(BackupPath) Then 
+		File.Delete(BackupPath)
+	End If
+    
+	If Not Directory.Exists(Path.GetDirectoryName(BackupPath)) Then 
+		Directory.CreateDirectory(Path.GetDirectoryName(BackupPath))
+	End If
+    
         SaveBinary(BackupPath, Definition)
     Catch e As Exception
         Console.WriteLine(String.Format("Failed to write report '{0}' to disk.", ReportPath))
@@ -71,14 +79,6 @@ End Sub
 
 Sub SaveBinary(ByVal FileName As String, ByVal Data As [Byte]())
     Dim oDoc As New XmlDocument()
-    
-    If File.Exists(FileName) Then 
-        File.Delete(FileName)
-    End If
-    
-    If Not Directory.Exists(Path.GetDirectoryName(FileName)) Then 
-        Directory.CreateDirectory(Path.GetDirectoryName(FileName))
-    End If
     
     Using oStream As MemoryStream = New MemoryStream(Data)
         oDoc.Load(oStream)
