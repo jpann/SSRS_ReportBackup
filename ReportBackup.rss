@@ -2,29 +2,30 @@
 ' File: ReportBackup.rss
 ' 
 ' Description:
-' This is a Microsoft SQL Report Server rs.exe script that can be used to back up all reports that are in a specified 
-' Report Server folder. This will use Report Server's API to back up the report's format to .RDL files on disk.
+' This is a script for Microsoft SQL Report Server rs.exe that can be used to back up all report layouts that are in a specific Report Server folder.
+'
+' To run the script, you must specify the global variables parentPath and exportTo as an argument to rs.exe by using the -v switch.
 '
 ' Example usage:
-' rs -i ReportBackup.rss -s http://localhost:8080/ReportServer
-
-' Configuration:
-' ssrsPath - Set this to the parent folder in SSRS that you wish to back up. For example: /
-' exportTo - Set this to the directory on disk where you want to back up the report .RDL files, without any trailing slash.
-'            The structure on disk will match the structure in ssrsPath.
-'           
-Public ssrsPath As String = "/"
-Public exportTo As String = "C:\Export"
+'
+'	rs -i ReportBackup.rss -s http://localhost:8080/ReportServer -v parentPath="/" -v exportTo=".\Export"
+'
+'	parentPath		Set this to the parent folder in SSRS that you wish to back up. For example, setting this to "/" will back up all reports in all sub folders.
+'	exportTo		Set this to the directory on disk where you want to back up the report .RDL files, without any trailing slash.
+'				The structure on disk will match the structure in ssrsPath.
+'
 Public Debug As Boolean = True
 
 Public Sub Main()
     Dim items() As CatalogItem
     Dim exportCount As Integer = 0
     Try
-        Console.WriteLine(String.Format("Exporting reports from '{0}' into '{1}'....", ssrsPath, exportTo))
+	WriteLogEntry("ReportBackup started")
+	
+        Console.WriteLine(String.Format("Exporting reports from '{0}' into '{1}'....", parentPath, exportTo))
         Console.WriteLine("")
         
-        items = rs.ListChildren(ssrsPath, True)
+        items = rs.ListChildren(parentPath, True)
         Dim item As CataLogItem
         For Each item In items
             If item.Type <> 2 Then Continue For
@@ -53,6 +54,8 @@ Public Sub Main()
                 WriteLogEntry(String.Format("Failed to export report '{0}'.", item_path), er)
             End Try
         Next item
+	
+	WriteLogEntry(String.Format("ReportBackup finished. {0} reports exported", exportCount))
     Catch e As Exception
         Console.WriteLine(e.Message)
         WriteLogEntry("Reports export failed.", e)
@@ -89,7 +92,7 @@ End Sub
 Sub WriteLogEntry(ByVal Message As String)
     Dim logfile As String = "ReportBackup.log"
 
-    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+    Using oWriter As StreamWriter = New StreamWriter(logfile, True)
         oWriter.WriteLine(String.Format("{0} - {1}", DateTime.Now, Message))
     End Using
 End Sub
@@ -97,7 +100,7 @@ End Sub
 Sub WriteLogEntry(ByVal Message As String, ByVal Ex As Exception)
     Dim logfile As String = "Error.log"
 
-    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+    Using oWriter As StreamWriter = New StreamWriter(logfile, True)
         oWriter.WriteLine(String.Format("{0} - {1} [Err: {2}]", DateTime.Now, Message, Ex.Message))
     End Using
 End Sub
@@ -105,7 +108,7 @@ End Sub
 Sub WriteDebugEntry(ByVal Message As String)
     Dim logfile As String = "Debug.log"
 
-    Using oWriter As StreamWriter = New StreamWriter(logfile, False)
+    Using oWriter As StreamWriter = New StreamWriter(logfile, True)
         oWriter.WriteLine(String.Format("{0} - {1}", DateTime.Now, Message))
     End Using
 End Sub
