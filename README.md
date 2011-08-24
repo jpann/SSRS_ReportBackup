@@ -8,13 +8,15 @@ To run the script, you must specify the global variables parentPath and exportTo
 Usage
 -----
 
-'rs -i ReportBackup.rss -s http://localhost:8080/ReportServer -v parentPath="/" -v exportTo=".\Export"'
+```
+rs -i ReportBackup.rss -s http://localhost:8080/ReportServer -v parentPath="/" -v exportTo=".\Export"
+```
 
 * parentPath	Set this to the parent folder in SSRS that you wish to back up. For example, setting this to "/" will back up all reports in all sub folders.
 * exportTo		Set this to the directory on disk where you want to back up the report .RDL files, without any trailing slash.
 			The structure on disk will match the structure in ssrsPath.
-------
-###Logging:
+Logging:
+-----
 
 Right now, this script creates two log files, ReportBackup.log and Error.log.
 
