@@ -19,10 +19,14 @@ Public Debug As Boolean = True
 Public Sub Main()
     Dim items() As CatalogItem
     Dim exportCount As Integer = 0
+    Dim backupPath As String
+    
     Try
 	WriteLogEntry("ReportBackup started")
 	
-        Console.WriteLine(String.Format("Exporting reports from '{0}' into '{1}'....", parentPath, exportTo))
+	backupPath = GetBackupDirectoryByDateStamp(exportTo)
+	
+        Console.WriteLine(String.Format("Exporting reports from '{0}' into '{1}'....", parentPath, backupPath))
         Console.WriteLine("")
         
         items = rs.ListChildren(parentPath, True)
@@ -40,7 +44,7 @@ Public Sub Main()
                 item_path = item.Path
                 definition = rs.GetReportDefinition(item_path)
                 item_export_path = item_path.Replace("/", "\")
-                item_export_path = String.Format("{0}{1}.rdl", exportTo, item_export_path)
+                item_export_path = String.Format("{0}{1}.rdl", backupPath, item_export_path)
                 
                 BackupReport(item_path, definition, item_export_path)
                 
@@ -113,3 +117,7 @@ Sub WriteDebugEntry(ByVal Message As String)
     End Using
 End Sub
 
+Function GetBackupDirectoryByDateStamp(ByVal path As String) As String
+    GetBackupDirectoryByDateStamp = path + "\\" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss")
+    Exit Function 
+End Function
